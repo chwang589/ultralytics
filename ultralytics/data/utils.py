@@ -40,11 +40,51 @@ VID_FORMATS = {"asf", "avi", "gif", "m4v", "mkv", "mov", "mp4", "mpeg", "mpg", "
 PIN_MEMORY = str(os.getenv("PIN_MEMORY", not MACOS)).lower() == "true"  # global pin_memory for dataloaders
 FORMATS_HELP_MSG = f"Supported formats are:\nimages: {IMG_FORMATS}\nvideos: {VID_FORMATS}"
 
+def get_absolute_path_without_suffix(absolute_path):
+    """
+    Extracts the absolute path of a file without its suffix.
 
-def img2label_paths(img_paths: List[str]) -> List[str]:
-    """Convert image paths to label paths by replacing 'images' with 'labels' and extension with '.txt'."""
-    sa, sb = f"{os.sep}images{os.sep}", f"{os.sep}labels{os.sep}"  # /images/, /labels/ substrings
-    return [sb.join(x.rsplit(sa, 1)).rsplit(".", 1)[0] + ".txt" for x in img_paths]
+    Parameters:
+    - absolute_path (str): The absolute path to the file.
+
+    Returns:
+    - str: The absolute path without the file's suffix.
+    """
+    # Ensure the path is absolute
+    absolute_path = os.path.abspath(absolute_path)
+
+    # Extract the directory and filename
+    directory = os.path.dirname(absolute_path)
+    filename_with_suffix = os.path.basename(absolute_path)
+
+    # Remove the suffix (file extension)
+    filename_without_suffix, _ = os.path.splitext(filename_with_suffix)
+
+    # Reconstruct the absolute path without the suffix
+    absolute_path_without_suffix = os.path.join(directory, filename_without_suffix)
+
+    return absolute_path_without_suffix
+
+def img2label_paths(img_paths, task="detect"):
+    """Define label paths as a function of image paths."""
+    img2label_map = {
+        "detect": "_det.txt",
+        # "detect": ".txt",
+        "segment": "_det_sam.txt",
+        "pose": "_keypoints.txt",
+    }
+    # sa, sb = (
+    #     f"{os.sep}images{os.sep}",
+    #     f"{os.sep}labels{os.sep}",
+    # )  # /images/, /labels/ substrings
+    # label_files = [
+    #     sb.join(x.rsplit(sa, 1)).rsplit(".", 1)[0] + img2label_map[task]
+    #     for x in img_paths
+    # ]
+    label_files = [
+        get_absolute_path_without_suffix(x) + img2label_map[task] for x in img_paths
+    ]
+    return label_files
 
 
 def check_file_speeds(
