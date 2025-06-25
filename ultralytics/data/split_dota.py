@@ -62,16 +62,13 @@ def bbox_iof(polygon1: np.ndarray, bbox2: np.ndarray, eps: float = 1e-6) -> np.n
     return outputs
 
 
-def load_yolo_dota(data_root: str, split: str = "train") -> List[Dict[str, Any]]:
+def load_yolo_dota(data_root, split="train"):
     """
-    Load DOTA dataset annotations and image information.
+    Load DOTA dataset.
 
     Args:
-        data_root (str): Data root directory.
-        split (str, optional): The split data set, could be 'train' or 'val'.
-
-    Returns:
-        (List[Dict[str, Any]]): List of annotation dictionaries containing image information.
+        data_root (str): Data root.
+        split (str): The split data set, could be train or val.
 
     Notes:
         The directory structure assumed for the DOTA dataset:
@@ -83,20 +80,20 @@ def load_yolo_dota(data_root: str, split: str = "train") -> List[Dict[str, Any]]
                     - train
                     - val
     """
-    assert split in {"train", "val"}, f"Split must be 'train' or 'val', not {split}."
+    assert split in ["train", "val"]
     im_dir = Path(data_root) / "images" / split
     assert im_dir.exists(), f"Can't find {im_dir}, please check your data root."
     im_files = glob(str(Path(data_root) / "images" / split / "*"))
     lb_files = img2label_paths(im_files)
+    print("lbfilesxxxxxx",lb_files[:5])
     annos = []
     for im_file, lb_file in zip(im_files, lb_files):
         w, h = exif_size(Image.open(im_file))
-        with open(lb_file, encoding="utf-8") as f:
+        with open(lb_file) as f:
             lb = [x.split() for x in f.read().strip().splitlines() if len(x)]
             lb = np.array(lb, dtype=np.float32)
         annos.append(dict(ori_size=(h, w), label=lb, filepath=im_file))
     return annos
-
 
 def get_windows(
     im_size: Tuple[int, int],
