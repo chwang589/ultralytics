@@ -293,7 +293,7 @@ class Model(torch.nn.Module):
 
         if str(weights).rpartition(".")[-1] == "pt":
             self.model, self.ckpt = attempt_load_one_weight(weights)
-            self.task = self.model.args["task"]
+            self.task = self.model.task
             self.overrides = self.model.args = self._reset_ckpt_args(self.model.args)
             self.ckpt_path = self.model.pt_path
         else:
@@ -754,7 +754,7 @@ class Model(torch.nn.Module):
             **kwargs (Any): Arbitrary keyword arguments for training configuration. Common options include:
                 data (str): Path to dataset configuration file.
                 epochs (int): Number of training epochs.
-                batch_size (int): Batch size for training.
+                batch (int): Batch size for training.
                 imgsz (int): Input image size.
                 device (str): Device to run training on (e.g., 'cuda', 'cpu').
                 workers (int): Number of worker threads for data loading.
@@ -777,6 +777,8 @@ class Model(torch.nn.Module):
 
         checks.check_pip_update_available()
 
+        if isinstance(kwargs.get("pretrained", None), (str, Path)):
+            self.load(kwargs["pretrained"])  # load pretrained weights if provided
         overrides = YAML.load(checks.check_yaml(kwargs["cfg"])) if kwargs.get("cfg") else self.overrides
         custom = {
             # NOTE: handle the case when 'cfg' includes 'data'.

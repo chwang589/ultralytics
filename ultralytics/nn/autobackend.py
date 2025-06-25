@@ -196,9 +196,9 @@ class AutoBackend(nn.Module):
 
         # In-memory PyTorch model
         if nn_module:
-            if fuse:
-                weights = weights.fuse(verbose=verbose)  # fuse before move to gpu
             model = weights.to(device)
+            if fuse:
+                model = model.fuse(verbose=verbose)
             if hasattr(model, "kpt_shape"):
                 kpt_shape = model.kpt_shape  # pose-only
             stride = max(int(model.stride.max()), 32)  # model stride
@@ -259,7 +259,11 @@ class AutoBackend(nn.Module):
                 session = onnxruntime.InferenceSession(w, providers=providers)
             else:
                 check_requirements(
-                    ["model-compression-toolkit>=2.3.0", "sony-custom-layers[torch]>=0.3.0", "onnxruntime-extensions"]
+                    [
+                        "model-compression-toolkit>=2.3.0,<2.4.1",
+                        "sony-custom-layers[torch]>=0.3.0",
+                        "onnxruntime-extensions",
+                    ]
                 )
                 w = next(Path(w).glob("*.onnx"))
                 LOGGER.info(f"Loading {w} for ONNX IMX inference...")
